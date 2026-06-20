@@ -63,13 +63,15 @@ class DAO:
         conn = DBConnect.get_connection()
         result = []
         cursor = conn.cursor(dictionary=True)
-        query = """ SELECT LEAST(n.state1, n.state2) AS st1, GREATEST (n.state1, n.state2) AS st2, COUNT(*) AS N
-                    FROM sighting s, neighbor n
-                    WHERE year(s.s_datetime) = %s
-                        AND s.shape = %s
-                        AND (s.state = n.state1 OR s.state = n.state2)
-                    GROUP BY st1,st2
-                """
+        query = """ SELECT n.st1, n.st2,COUNT(*) AS N
+                    FROM (SELECT DISTINCT LEAST(state1,state2) AS st1, 
+                                        GREATEST(state1,state2) AS st2  
+                          FROM neighbor) n,
+                    sighting s
+                    WHERE YEAR(s.s_datetime) = %s
+                      AND s.shape = %s
+                      AND (s.state = n.st1 OR s.state = n.st2)
+                    GROUP BY n.st1, n.st2   """
                 # COUNT n = TOT AVVISTAMENTI TRA DUE STATI
                 # che gli atati abbiano uno dei due vicini
         cursor.execute(query, (year, shape))
